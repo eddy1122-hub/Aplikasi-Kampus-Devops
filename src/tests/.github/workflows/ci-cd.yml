@@ -1,0 +1,33 @@
+name: CI-CD Aplikasi Kampus
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ambil kode
+        uses: actions/checkout@v5
+      - name: Siapkan PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+      - name: Cek sintaks (lint)
+        run: for f in src/*.php tests/*.php; do php -l "$f"; done
+      - name: Automated testing
+        run: php tests/KrsTest.php
+      - name: Build Docker image
+        run: docker build -t aplikasi-kampus:${{ github.sha }} .
+
+  deploy:
+    needs: build-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy ke cloud (simulasi)
+        run: echo "Deploy aplikasi-kampus:${{ github.sha }} (rolling update)"
